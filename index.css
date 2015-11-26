@@ -1,0 +1,52 @@
+html * {
+    font-family: 'Lucida Grande', 'Lucida Sans Unicode', Arial, Helvetica, sans-serif;
+}
+
+#container {
+    width: 74%;
+    height: 700px;
+    margin: 10px 1%; 
+    float: left;
+}
+
+#controls {
+    width: 20%;
+    height: 700px;
+    margin: 10px 2%;
+    float: left;
+}
+
+#status {
+    display: none;
+}
+
+#progress {
+    list-style-type: none;
+    padding: 0;
+    line-height: 2em;
+    font-size: 10pt;
+}
+
+button {
+    font-size: 12pt;
+}
+
+.highcharts-tooltip>span {
+    padding: 10px;
+    white-space: normal !important;
+    width: 250px;
+}
+
+.loading {
+    margin-top: 10em;
+    text-align: center;
+    color: gray;
+}
+
+.f32 .flag {
+    vertical-align: middle !important;
+}
+
+.distance {
+    color: #ff0000;
+}

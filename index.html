@@ -1,0 +1,42 @@
+<!doctype html>
+<html>
+<head>
+
+<meta property="og:image" content="world.png" />
+<meta property="og:title" content="World Indicators Guessing Game" />
+<meta property="og:description" content="Guess the country that has the most (or the least) of a randomly chosen data indicator." />
+
+<title>World Indicators Guessing Game</title>
+
+<script type="text/javascript" src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+<script type="text/javascript" src="https://code.highcharts.com/maps/highmaps.js"></script>
+<script type="text/javascript" src="https://code.highcharts.com/maps/modules/data.js"></script>
+<script type="text/javascript" src="https://code.highcharts.com/maps/modules/exporting.js"></script>
+<script type="text/javascript" src="https://code.highcharts.com/mapdata/custom/world.js"></script>
+
+<!-- Flag sprites service provided by Martijn Lafeber, https://github.com/lafeber/world-flags-sprite/blob/master/LICENSE -->
+<link rel="stylesheet" type="text/css" href="https://cloud.github.com/downloads/lafeber/world-flags-sprite/flags32.css" />
+<link rel="stylesheet" type="text/css" href="index.css" />
+
+<script type="text/javascript" src="index.js"></script>
+
+</head>
+
+<body>
+
+<div id="body-wrapper">
+
+  <div id="controls">
+    <div id="button-group">
+      <button type="button" id="give-up">Give Up</button>
+      <button type="button" id="next">New Game</button>
+    </div>
+    <div id="status">Loading...</div>
+    <div id="progress-wrapper"><ul id="progress"></ul></div>
+  </div>
+  <div id="container" style="height: 700px"><h1>Loading...</h1></div>
+</div>
+
+</body>
+</html>
+
