@@ -1,4 +1,4 @@
-var remoteApiUrl = 'http://andrewmacheret.com:8102/remote-apis';
+var remoteApiUrl = 'https://andrewmacheret.com/remote-apis';
 
 // there has got to be a better way to do this...
 //var HIDDEN_VALUE = -9999999;
