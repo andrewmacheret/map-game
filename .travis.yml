@@ -13,4 +13,4 @@ deploy:
   default_text_charset: utf-8
   detect_encoding: true
   local_dir: www/
-  upload_dir: projects/last-known-mouse-position/
+  upload_dir: projects/map-game/
