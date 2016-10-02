@@ -1,8 +1,5 @@
 var remoteApiUrl = 'https://andrewmacheret.com/remote-apis';
 
-// there has got to be a better way to do this...
-//var HIDDEN_VALUE = -9999999;
-
 var Game = {
   log: function $this(message, options) {
     if (!options) options = {};
