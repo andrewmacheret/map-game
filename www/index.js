@@ -1,4 +1,4 @@
-var remoteApiUrl = 'https://remote-apis.andrewmacheret.com:9443';
+var remoteApiUrl = 'https://remote-apis.andrewmacheret.com';
 
 var Game = {
   log: function $this(message, options) {
