@@ -1,4 +1,8 @@
-var remoteApiUrl = 'https://remote-apis.andrewmacheret.com';
+var worldBankUrl = 'https://api.worldbank.org/v2';
+var mapDataUrl = 'https://cdn.jsdelivr.net/npm/@highcharts/map-collection@2.3.3/custom/world.geo.json';
+
+// how many years back to look for each country's latest value
+var indicatorYears = 10;
 
 var Game = {
   log: function $this(message, options) {
@@ -31,14 +35,13 @@ var Game = {
   loadFeatures: function $this(options, callback) {
     // use cache if possible
     if (Game.features) {
-      callback && callback(null, features);
+      callback && callback(null, Game.features);
       return;
     }
 
     Game.log('Loading features...');
     // no options
-    var url = remoteApiUrl + '/highmaps/worlds/custom/world';
-    $.getJSON(url).done(function(response) {
+    $.getJSON(mapDataUrl).done(function(response) {
       Game.log('Processing features...');
       if (!response || !response.features) {
         //callback('Error loading country map data - invalid response');
@@ -53,6 +56,7 @@ var Game = {
         }
       });
       Game.log('Features loaded.');
+      Game.mapData = response;
       Game.features = features;
       callback && callback(null, features);
     }).fail(function(jqXHR, textStatus, errorThrown) {
@@ -64,13 +68,14 @@ var Game = {
   loadIndicators: function $this(options, callback) {
     // use cache if possible
     if (Game.indicators) {
-      callback(null, indicators);
+      callback && callback(null, Game.indicators);
       return;
     }
 
     Game.log('Loading indicators...');
     // no options
-    var url = remoteApiUrl + '/worldbank/indicators';
+    // source 2 is World Development Indicators, the full list is 15MB
+    var url = worldBankUrl + '/source/2/indicator?format=json&per_page=32767';
     $.getJSON(url).done(function(response) {
       Game.log('Processing indicators...');
       if (!response || !response.length || response.length != 2 || !response[1]) {
@@ -92,13 +97,13 @@ var Game = {
   loadCountries: function $this(options, callback) {
     // use cache if possible
     if (Game.countries) {
-      callback && callback(null, countries);
+      callback && callback(null, Game.countries);
       return;
     }
 
     Game.log('Loading countries...');
     // no options
-    var url = remoteApiUrl + '/worldbank/countries';
+    var url = worldBankUrl + '/country?format=json&per_page=32767';
     $.getJSON(url).done(function(response) {
       Game.log('Processing countries...');
       if (!response || !response.length || response.length != 2 || !response[1]) {
@@ -123,23 +128,35 @@ var Game = {
   },
 
   loadIndicator: function $this(options, callback) {
-    Game.log('Loading indicator...');
+    Game.log('Loading indicator ' + options.indicator.id + '...', {quiet: true});
     // options.indicator
     // options.features
-    var url = remoteApiUrl + '/worldbank/indicators/' + options.indicator.id;
-    $.getJSON(url).done(function(response) {
-      Game.log('Processing indicator...');
+    var year = new Date().getFullYear();
+    var url = worldBankUrl + '/country/all/indicator/' + encodeURIComponent(options.indicator.id)
+      + '?format=json&per_page=32767&date=' + (year - indicatorYears) + ':' + year;
+    // some indicators make the World Bank API hang, so give up and pick another
+    $.ajax({url: url, dataType: 'json', timeout: 15000}).done(function(response) {
+      Game.log('Processing indicator ' + options.indicator.id + '...', {quiet: true});
       if (!response || !response.length || response.length != 2) {
         callback && callback('Error loading world indicator - invalid response');
         //window.setTimeout(function() { $this(options, callback); }, 100);
         return;
       }
 
-      var data = [];
+      // keep only the most recent value for each country
+      var latest = {};
       $.each(response[1] || [], function(i, result) {
+        if (result.value === null || result.value === undefined) return;
         var countryId = result.country.id;
+        if (!latest[countryId] || result.date > latest[countryId].date) {
+          latest[countryId] = result;
+        }
+      });
+
+      var data = [];
+      $.each(latest, function(countryId, result) {
         var feature = options.features[countryId];
-        if (feature && result.value !== null && result.value !== undefined) {
+        if (feature) {
           data.push({
             code: countryId,
             name: feature.name,
@@ -150,7 +167,7 @@ var Game = {
           });
         }
       });
-      Game.log('Indicator loaded');
+      Game.log('Indicator ' + options.indicator.id + ' loaded', {quiet: true});
       callback && callback(null, data);
     }).fail(function() {
       callback && callback('Error loading world indicator - connection failure');
@@ -186,35 +203,52 @@ var Game = {
     };
   },
 
+  // returns why an indicator makes a bad game, or nothing if it's fine
+  checkIndicatorData: function(data) {
+    if (data.length == 0) return 'No data';
+    if (data.length < 100) return 'No challenge';
+    var first = data[0].actualValue;
+    if (data.every(function(point) { return point.actualValue == first; })) return 'No difference';
+  },
+
+  // the World Bank API is slow and many indicators are too sparse to play,
+  // so try a few random ones at once and use the first good one
+  findIndicator: function $this(options, callback) {
+    var tries = 4;
+    var pending = tries;
+    var found = false;
+    for (var i = 0; i < tries; i++) {
+      var indicator = options.indicators[Math.floor(Math.random() * options.indicators.length)];
+      (function(indicator) {
+        Game.loadIndicator({features: options.features, indicator: indicator}, function(err, data) {
+          pending--;
+          if (found) return;
+          var problem = err || Game.checkIndicatorData(data);
+          if (!problem) {
+            found = true;
+            callback(null, {indicator: indicator, data: data});
+            return;
+          }
+          Game.log(problem);
+          if (pending == 0) $this(options, callback);
+        });
+      })(indicator);
+    }
+  },
+
   loadRandomIndicator: function $this(options, callback) {
     $('#give-up').prop('disabled', true);
     $('#next').prop('disabled', true);
 
-    var indicator = options.indicators[Math.floor(Math.random() * options.indicators.length)];
     var useMax = Math.random() < 0.5;
-    $.when(
-      $defer(Game.loadIndicator, {features: options.features, indicator: indicator})
-    ).fail(function(err) {
-      Game.log(err);
-      $this(options, callback);
-    }).done(function(data) {
-      if (data.length == 0) {
-        Game.log('No data');
-        $this(options, callback);
-        return;
-      }
-      //Game.log(JSON.stringify({data: data}, 0, 4));
+    // use the indicator found in the background during the last game, if any
+    var nextIndicator = Game.nextIndicator || $defer(Game.findIndicator, options);
+    Game.nextIndicator = null;
+    nextIndicator.done(function(result) {
+      var indicator = result.indicator;
+      var data = result.data;
       var max = data.reduce(function(max, point) {return max == null ? point.actualValue : Math.max(max, point.actualValue)}, null);
       var min = data.reduce(function(min, point) {return min == null ? point.actualValue : Math.min(min, point.actualValue)}, null);
-      if (max == min) {
-        Game.log('No difference');
-        $this(options, callback);
-        return;
-      } else if (data.length < 100) {
-        Game.log('No challenge');
-        $this(options, callback);
-        return;
-      }
 
       var initValue = useMax ? min : max;
       var correctValue = useMax ? max : min;
@@ -252,6 +286,7 @@ var Game = {
         });
         Game.log('Loaded.');
         Game.progress({restart: true});
+        Game.nextIndicator = $defer(Game.findIndicator, options);
         callback && callback();
       });
     });
@@ -270,6 +305,11 @@ var Game = {
     // options.useLogarithmic
 
     var mapOptions = {
+      // the page is always light, so don't follow the OS dark mode
+      palette: {
+        colorScheme: 'light'
+      },
+
       title: {
         text: 'World Indicators Guessing Game'
       },
@@ -288,7 +328,7 @@ var Game = {
       },
 
       credits: {
-        href: 'http://data.worldbank.org',
+        href: 'https://data.worldbank.org',
         text: 'Data provided by data.worldbank.org, '
           + 'mapping provided by highcharts.com'
       },
@@ -302,10 +342,13 @@ var Game = {
 
       tooltip: {
         useHTML: true,
-        pointFormat: '<span class="f32"><span class="flag {point.flag}"></span></span>'
+        style: {
+          width: '250px'
+        },
+        pointFormat: '<img class="flag" src="https://flagcdn.com/24x18/{point.flag}.png" width="24" height="18" alt="">'
           + ' {point.name}: <b>{point.value}</b>',
         positioner: function () {
-          return { x: 0, y: map.height() - 300 };
+          return { x: 0, y: this.chart.chartHeight - 300 };
         }
       },
 
@@ -321,7 +364,7 @@ var Game = {
       series: [{
         data: options.data,
         joinBy: ['iso-a2', 'code'],
-        mapData: Highcharts.maps['custom/world'],
+        mapData: Game.mapData,
         name: options.indicator.sourceNote + ' ... Source: ' + options.indicator.sourceOrganization,
         states: {
           hover: {
@@ -389,7 +432,7 @@ var Game = {
       return point.name;
     }).sort();
 
-    Game.progress('All correct answers: ' + correctAnswers);
+    $('#progress').append('<li>All correct answers: ' + correctAnswers.join(', ') + '</li>');
   },
 
   distance: function $this(country1, country2) {
