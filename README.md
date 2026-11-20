@@ -2,7 +2,7 @@
 
 [![Deploy](https://github.com/andrewmacheret/map-game/actions/workflows/deploy.yml/badge.svg)](https://github.com/andrewmacheret/map-game/actions/workflows/deploy.yml) [![License](https://img.shields.io/badge/license-MIT-lightgray.svg)](https://github.com/andrewmacheret/map-game/blob/master/LICENSE.md)
 
-A web-based map game using [jQuery](https://jquery.com) and [Highmaps](https://www.highcharts.com/products/highmaps), with data from the [World Bank API](https://datahelpdesk.worldbank.org/knowledgebase/articles/889392).
+A web-based map game using [Highmaps](https://www.highcharts.com/products/highmaps), with data from the [World Bank API](https://datahelpdesk.worldbank.org/knowledgebase/articles/889392).
 
 See it running at [https://andrewmacheret.com/projects/map-game](https://andrewmacheret.com/projects/map-game).
 

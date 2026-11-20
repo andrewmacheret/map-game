@@ -8,7 +8,7 @@ var Game = {
   log: function $this(message, options) {
     if (!options) options = {};
     console && console.log('[' + new Date() + '] ' + message);
-    if (!options.quiet) $('#status').text(message);
+    if (!options.quiet) document.getElementById('status').textContent = message;
   },
 
   progress: function $this(options) {
@@ -17,7 +17,7 @@ var Game = {
     // options.restart
 
     if (options.restart) {
-      $('#progress').empty();
+      document.getElementById('progress').replaceChildren();
       Game.log('Progress cleared', {quiet: true});
     }
     if (options.guess) {
@@ -27,7 +27,7 @@ var Game = {
       } else {
         message = options.guess + ' is correct!';
       }
-      $('#progress').append('<li>' + message + '</li>');
+      document.getElementById('progress').insertAdjacentHTML('beforeend', '<li>' + message + '</li>');
       Game.log(message, {quiet: true});
     }
   },
@@ -41,7 +41,7 @@ var Game = {
 
     Game.log('Loading features...');
     // no options
-    $.getJSON(mapDataUrl).done(function(response) {
+    getJSON(mapDataUrl).then(function(response) {
       Game.log('Processing features...');
       if (!response || !response.features) {
         //callback('Error loading country map data - invalid response');
@@ -50,7 +50,7 @@ var Game = {
       }
       
       var features = {};
-      $.each(response.features, function(i, feature) {
+      response.features.forEach(function(feature) {
         if (feature.id) {
           features[feature.id] = feature.properties;
         }
@@ -59,7 +59,7 @@ var Game = {
       Game.mapData = response;
       Game.features = features;
       callback && callback(null, features);
-    }).fail(function(jqXHR, textStatus, errorThrown) {
+    }, function() {
       Game.log('Error loading country map data - connection failure');
       window.setTimeout(function() { $this(options, callback); }, 100);
     });
@@ -76,7 +76,7 @@ var Game = {
     // no options
     // source 2 is World Development Indicators, the full list is 15MB
     var url = worldBankUrl + '/source/2/indicator?format=json&per_page=32767';
-    $.getJSON(url).done(function(response) {
+    getJSON(url).then(function(response) {
       Game.log('Processing indicators...');
       if (!response || !response.length || response.length != 2 || !response[1]) {
         //callback('Error loading world indicators - invalid response');
@@ -88,7 +88,7 @@ var Game = {
       Game.log('Indicators loaded');
       Game.indicators = indicators;
       callback && callback(null, indicators);
-    }).fail(function() {
+    }, function() {
       Game.log('Error loading world indicators - connection failure');
       window.setTimeout(function() { $this(options, callback); }, 100);
     });
@@ -104,7 +104,7 @@ var Game = {
     Game.log('Loading countries...');
     // no options
     var url = worldBankUrl + '/country?format=json&per_page=32767';
-    $.getJSON(url).done(function(response) {
+    getJSON(url).then(function(response) {
       Game.log('Processing countries...');
       if (!response || !response.length || response.length != 2 || !response[1]) {
         //callback('Error loading countries - invalid response');
@@ -113,7 +113,7 @@ var Game = {
       }
       
       var countries = {};
-      $.each(response[1], function(i, country) {
+      response[1].forEach(function(country) {
         if (country.iso2Code) {
           countries[country.iso2Code] = country;
         }
@@ -121,7 +121,7 @@ var Game = {
       Game.log('Countries loaded.');
       Game.countries = countries;
       callback && callback(null, countries);
-    }).fail(function(jqXHR, textStatus, errorThrown) {
+    }, function() {
       Game.log('Error loading countries - connection failure');
       window.setTimeout(function() { $this(options, callback); }, 100);
     });
@@ -135,7 +135,7 @@ var Game = {
     var url = worldBankUrl + '/country/all/indicator/' + encodeURIComponent(options.indicator.id)
       + '?format=json&per_page=32767&date=' + (year - indicatorYears) + ':' + year;
     // some indicators make the World Bank API hang, so give up and pick another
-    $.ajax({url: url, dataType: 'json', timeout: 15000}).done(function(response) {
+    getJSON(url, {signal: AbortSignal.timeout(15000)}).then(function(response) {
       Game.log('Processing indicator ' + options.indicator.id + '...', {quiet: true});
       if (!response || !response.length || response.length != 2) {
         callback && callback('Error loading world indicator - invalid response');
@@ -145,7 +145,7 @@ var Game = {
 
       // keep only the most recent value for each country
       var latest = {};
-      $.each(response[1] || [], function(i, result) {
+      (response[1] || []).forEach(function(result) {
         if (result.value === null || result.value === undefined) return;
         var countryId = result.country.id;
         if (!latest[countryId] || result.date > latest[countryId].date) {
@@ -154,7 +154,8 @@ var Game = {
       });
 
       var data = [];
-      $.each(latest, function(countryId, result) {
+      Object.keys(latest).forEach(function(countryId) {
+        var result = latest[countryId];
         var feature = options.features[countryId];
         if (feature) {
           data.push({
@@ -169,7 +170,7 @@ var Game = {
       });
       Game.log('Indicator ' + options.indicator.id + ' loaded', {quiet: true});
       callback && callback(null, data);
-    }).fail(function() {
+    }, function() {
       callback && callback('Error loading world indicator - connection failure');
       //window.setTimeout(function() { $this(options, callback); }, 100);
     });
@@ -237,14 +238,16 @@ var Game = {
   },
 
   loadRandomIndicator: function $this(options, callback) {
-    $('#give-up').prop('disabled', true);
-    $('#next').prop('disabled', true);
+    var giveUp = document.getElementById('give-up');
+    var next = document.getElementById('next');
+    giveUp.disabled = true;
+    next.disabled = true;
 
     var useMax = Math.random() < 0.5;
     // use the indicator found in the background during the last game, if any
-    var nextIndicator = Game.nextIndicator || $defer(Game.findIndicator, options);
+    var nextIndicator = Game.nextIndicator || defer(Game.findIndicator, options);
     Game.nextIndicator = null;
-    nextIndicator.done(function(result) {
+    nextIndicator.then(function(result) {
       var indicator = result.indicator;
       var data = result.data;
       var max = data.reduce(function(max, point) {return max == null ? point.actualValue : Math.max(max, point.actualValue)}, null);
@@ -254,40 +257,41 @@ var Game = {
       var correctValue = useMax ? max : min;
       var correctPoints = data.reduce(function(arr, point) {return point.actualValue == correctValue ? arr.concat(point) : arr;}, []);
 
-      $.each(data, function(i, point) {
+      data.forEach(function(point) {
         data.value = initValue;
       });
 
-      $.when(
-        $defer(Game.loadMap, {
-          countries: options.countries,
-          indicator: indicator,
-          data: data,
-          correctPoints: correctPoints,
-          colorFunction: Game.buildColorFunction(min, max, useMax),
-          container: $("#container"),
-          min: min,
-          max: max,
-          useMax: useMax,
-          useLogarithmic: false
-        })
-      ).fail(function(err) {
-        Game.log(err);
-        $this(options, callback);
-      }).done(function(map) {
-        $('#give-up').prop('disabled', false).click(function(event) {
-          $(this).prop('disabled', true).unbind(event);
-          $('#next').prop('disabled', false);
+      defer(Game.loadMap, {
+        countries: options.countries,
+        indicator: indicator,
+        data: data,
+        correctPoints: correctPoints,
+        colorFunction: Game.buildColorFunction(min, max, useMax),
+        container: document.getElementById('container'),
+        min: min,
+        max: max,
+        useMax: useMax,
+        useLogarithmic: false
+      }).then(function(map) {
+        giveUp.disabled = false;
+        giveUp.onclick = function() {
+          giveUp.disabled = true;
+          giveUp.onclick = null;
+          next.disabled = false;
           Game.reveal(map, correctPoints);
-        });
-        $('#next').click(function(event) {
-          $(this).prop('disabled', true).unbind(event);
+        };
+        next.onclick = function() {
+          next.disabled = true;
+          next.onclick = null;
           $this(options, callback);
-        });
+        };
         Game.log('Loaded.');
         Game.progress({restart: true});
-        Game.nextIndicator = $defer(Game.findIndicator, options);
+        Game.nextIndicator = defer(Game.findIndicator, options);
         callback && callback();
+      }, function(err) {
+        Game.log(err);
+        $this(options, callback);
       });
     });
   },
@@ -379,7 +383,7 @@ var Game = {
                 value: this.actualValue,
                 color: null
               }, false);
-              map.highcharts().redraw();
+              map.redraw();
 
               if (this.actualValue == (options.useMax ? options.max : options.min)) {
                 Game.progress({
@@ -388,8 +392,10 @@ var Game = {
 
                 Game.reveal(map, options.correctPoints);
 
-                $('#give-up').prop('disabled', true).unbind('click');
-                $('#next').prop('disabled', false);
+                var giveUp = document.getElementById('give-up');
+                giveUp.disabled = true;
+                giveUp.onclick = null;
+                document.getElementById('next').disabled = false;
               } else {
                 //var diff = Math.abs((options.useMax ? options.max : options.min) - this.value);
 
@@ -413,26 +419,26 @@ var Game = {
       }]
     };
 
-    var map = options.container.highcharts('Map', mapOptions);
+    var map = Highcharts.mapChart(options.container, mapOptions);
 
     callback && callback(null, map);
   },
 
   reveal: function $this(map, correctPoints) {
-    var data = map.highcharts().series[0].data;
-    $.each(data, function(i, point) {
-      this.update({
+    var data = map.series[0].data;
+    data.forEach(function(point) {
+      point.update({
         color: null,
         value: point.actualValue
       }, false);
     });
-    map.highcharts().redraw();
+    map.redraw();
     
     var correctAnswers = correctPoints.map(function(point) {
       return point.name;
     }).sort();
 
-    $('#progress').append('<li>All correct answers: ' + correctAnswers.join(', ') + '</li>');
+    document.getElementById('progress').insertAdjacentHTML('beforeend', '<li>All correct answers: ' + correctAnswers.join(', ') + '</li>');
   },
 
   distance: function $this(country1, country2) {
@@ -450,31 +456,44 @@ var Game = {
   }
 }
 
-// Convert a function of the form
-//   fn(optionsObject, callback)
-// to a jquery promise
-function $defer(fn, options) {
-  var deferred = $.Deferred();
-  fn(options, function(err, data) {
-    if(err !== null) {
-      return deferred.reject(err);
-    }
-    deferred.resolve(data);
+// fetch JSON, failing on HTTP errors and bad JSON too
+function getJSON(url, options) {
+  return fetch(url, options).then(function(response) {
+    if (!response.ok) throw new Error(response.status + ' ' + response.statusText);
+    return response.json();
   });
-  return deferred.promise();   
 }
 
-$(function $this() {
-  $.when(
-    $defer(Game.loadFeatures, {}),
-    $defer(Game.loadIndicators, {}),
-    $defer(Game.loadCountries, {})
-  ).fail(function(err) {
+// Convert a function of the form
+//   fn(optionsObject, callback)
+// to a promise
+function defer(fn, options) {
+  var resolve, reject;
+  var promise = new Promise(function(res, rej) {
+    resolve = res;
+    reject = rej;
+  });
+  // call fn outside the Promise so its errors throw instead of rejecting
+  fn(options, function(err, data) {
+    if(err !== null) {
+      return reject(err);
+    }
+    resolve(data);
+  });
+  return promise;
+}
+
+document.addEventListener('DOMContentLoaded', function init() {
+  Promise.all([
+    defer(Game.loadFeatures, {}),
+    defer(Game.loadIndicators, {}),
+    defer(Game.loadCountries, {})
+  ]).then(function(results) {
+    Game.loadRandomIndicator({features: results[0], indicators: results[1], countries: results[2]});
+  }, function(err) {
     //alert(err ' - please try again (reload the page)');
     Game.log(err);
-    window.setTimeout(function() { $this(); }, 100);
-  }).done(function(features, indicators, countries) {
-    Game.loadRandomIndicator({features: features, indicators: indicators, countries: countries});
+    window.setTimeout(function() { init(); }, 100);
   });
 });
 
