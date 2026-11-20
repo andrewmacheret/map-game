@@ -18,7 +18,7 @@ jobs:
         with:
           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
           aws-region: us-east-1
-      - run: aws s3 sync www s3://andrewmacheret.com/projects/map-game
+      - run: aws s3 sync www s3://andrewmacheret.com/projects/map-game --cache-control max-age=300
       - name: Invalidate CloudFront cache
         if: vars.CLOUDFRONT_DISTRIBUTION_ID != ''
         run: |
