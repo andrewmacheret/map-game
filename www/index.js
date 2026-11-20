@@ -8,28 +8,65 @@ var Game = {
   log: function $this(message, options) {
     if (!options) options = {};
     console && console.log('[' + new Date() + '] ' + message);
-    if (!options.quiet) document.getElementById('status').textContent = message;
+    if (!options.quiet) {
+      document.getElementById('status').textContent = message;
+      document.body.classList.toggle('busy', /\.\.\.$/.test(message));
+    }
   },
 
   progress: function $this(options) {
-    // options.guess
-    // options.diff
+    // options.point
+    // options.diff (km to the nearest answer, or nothing if correct)
     // options.restart
 
+    var list = document.getElementById('progress');
     if (options.restart) {
-      document.getElementById('progress').replaceChildren();
+      list.replaceChildren();
       Game.log('Progress cleared', {quiet: true});
     }
-    if (options.guess) {
-      var message;
-      if (options.diff) {
-        message = options.guess + ' is off by <span class="distance">' + options.diff + '</span>.';
+    if (options.point) {
+      var result = document.createElement('span');
+      if (options.diff == null) {
+        result.className = 'correct';
+        result.textContent = 'Correct!';
       } else {
-        message = options.guess + ' is correct!';
+        result.className = 'distance';
+        result.textContent = Game.formatKm(options.diff) + ' off';
       }
-      document.getElementById('progress').insertAdjacentHTML('beforeend', '<li>' + message + '</li>');
-      Game.log(message, {quiet: true});
+      var item = document.createElement('li');
+      item.append(Game.countryLabel(options.point), result);
+      list.prepend(item);
+      Game.log(options.point.name + ': ' + result.textContent, {quiet: true});
     }
+  },
+
+  // a flag and a country name, for the guess list
+  countryLabel: function(point) {
+    var label = document.createElement('span');
+    label.className = 'country';
+    var flag = document.createElement('img');
+    flag.className = 'flag';
+    flag.src = 'https://flagcdn.com/24x18/' + point.flag + '.png';
+    flag.width = 24;
+    flag.height = 18;
+    flag.alt = '';
+    var name = document.createElement('span');
+    name.textContent = point.name;
+    label.append(flag, name);
+    return label;
+  },
+
+  formatKm: function(km) {
+    return Math.round(km).toLocaleString() + ' km';
+  },
+
+  // short numbers like 1.23M or 45.6 so tooltips and the legend stay readable
+  formatValue: function(value) {
+    if (value == null) return '';
+    return new Intl.NumberFormat(undefined, {
+      notation: Math.abs(value) >= 1e6 ? 'compact' : 'standard',
+      maximumSignificantDigits: 4
+    }).format(value);
   },
 
   loadFeatures: function $this(options, callback) {
@@ -163,7 +200,7 @@ var Game = {
             name: feature.name,
             flag: countryId.replace('UK', 'GB').toLowerCase(),
             actualValue: parseFloat(result.value),
-            color: '#cccccc',
+            color: 'var(--hidden)',
             index: data.length
           });
         }
@@ -176,32 +213,15 @@ var Game = {
     });
   },
 
-  rgb2hex: function(rgb) {
-    rgb = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
-    function hex(x) {
-      return ('0' + parseInt(x).toString(16)).slice(-2);
-    }
-    return '#' + hex(rgb[1]) + hex(rgb[2]) + hex(rgb[3]);
-  },
+  // colors from far off to the answer, the same in light and dark mode
+  palette: ['#312e81', '#6d28d9', '#c026d3', '#f472b6', '#fbbf24'],
 
-  buildColorFunction: function(min, max, useMax) {
-    return function(value) {
-      if (value === null) {
-        return Game.rgb2hex('rgb(192,192,192)');
-      }
-    
-      if (useMax ? value == max : value == min) {
-        return Game.rgb2hex('rgb(0,255,0)');
-      }
-
-      var percent = useMax
-        ? (value - min) / (max - min)
-        : (value - max) / (min - max);
-      var red = Math.round(255 * (1 - percent*.80));
-      var green = Math.round(255 * (percent*.80));
-      var blue = 0;
-      return Game.rgb2hex('rgb(' + red + ',' + green + ',' + blue + ')');
-    };
+  // the answer end of the scale is always the last palette color
+  colorStops: function(useMax) {
+    var colors = useMax ? Game.palette : Game.palette.slice().reverse();
+    return colors.map(function(color, i) {
+      return [i / (colors.length - 1), color];
+    });
   },
 
   // returns why an indicator makes a bad game, or nothing if it's fine
@@ -230,7 +250,7 @@ var Game = {
             callback(null, {indicator: indicator, data: data});
             return;
           }
-          Game.log(problem);
+          Game.log(indicator.id + ': ' + problem, {quiet: true});
           if (pending == 0) $this(options, callback);
         });
       })(indicator);
@@ -242,6 +262,7 @@ var Game = {
     var next = document.getElementById('next');
     giveUp.disabled = true;
     next.disabled = true;
+    Game.log('Finding a playable indicator...');
 
     var useMax = Math.random() < 0.5;
     // use the indicator found in the background during the last game, if any
@@ -253,20 +274,14 @@ var Game = {
       var max = data.reduce(function(max, point) {return max == null ? point.actualValue : Math.max(max, point.actualValue)}, null);
       var min = data.reduce(function(min, point) {return min == null ? point.actualValue : Math.min(min, point.actualValue)}, null);
 
-      var initValue = useMax ? min : max;
       var correctValue = useMax ? max : min;
       var correctPoints = data.reduce(function(arr, point) {return point.actualValue == correctValue ? arr.concat(point) : arr;}, []);
-
-      data.forEach(function(point) {
-        data.value = initValue;
-      });
 
       defer(Game.loadMap, {
         countries: options.countries,
         indicator: indicator,
         data: data,
         correctPoints: correctPoints,
-        colorFunction: Game.buildColorFunction(min, max, useMax),
         container: document.getElementById('container'),
         min: min,
         max: max,
@@ -279,13 +294,14 @@ var Game = {
           giveUp.onclick = null;
           next.disabled = false;
           Game.reveal(map, correctPoints);
+          Game.log('The answer is outlined on the map.');
         };
         next.onclick = function() {
           next.disabled = true;
           next.onclick = null;
           $this(options, callback);
         };
-        Game.log('Loaded.');
+        Game.log('Click a country to guess.');
         Game.progress({restart: true});
         Game.nextIndicator = defer(Game.findIndicator, options);
         callback && callback();
@@ -301,104 +317,163 @@ var Game = {
     // options.indicator
     // options.data
     // options.correctPoints
-    // options.colorFunction
     // options.container
     // options.min
     // options.max
     // options.useMax
     // options.useLogarithmic
 
+    var target = options.useMax ? options.max : options.min;
+    var guesses = 0;
+
     var mapOptions = {
-      // the page is always light, so don't follow the OS dark mode
+      // follow the OS light or dark mode, like the page
       palette: {
-        colorScheme: 'light'
+        colorScheme: 'light dark'
       },
 
-      title: {
-        text: 'World Indicators Guessing Game'
+      chart: {
+        backgroundColor: 'transparent',
+        // leave room on the left for the panel so it doesn't hide countries
+        spacing: [12, 12, 12, 364],
+        style: { fontFamily: 'inherit' }
       },
 
-      subtitle: {
-        text: 'Find country(s) with the ' + (options.useMax ? 'largest' : 'smallest') + ' value for the given indicator'
-      },
+      title: { text: null },
 
       legend: {
         title: {
-          text: options.indicator.name,
-          style: {
-            color: (Highcharts.theme && Highcharts.theme.textColor) || 'black'
-          }
-        }
+          text: options.useMax ? 'Answer is the highest' : 'Answer is the lowest',
+          style: { color: 'var(--muted)', fontWeight: 'normal', fontSize: '12px' }
+        },
+        align: 'right',
+        verticalAlign: 'bottom',
+        floating: true,
+        backgroundColor: 'var(--panel)',
+        borderColor: 'var(--border)',
+        borderWidth: 1,
+        borderRadius: 12,
+        padding: 12,
+        symbolWidth: 220,
+        itemStyle: { color: 'var(--text)' }
       },
 
-      credits: {
-        href: 'https://data.worldbank.org',
-        text: 'Data provided by data.worldbank.org, '
-          + 'mapping provided by highcharts.com'
+      credits: { enabled: false },
+
+      exporting: {
+        buttons: {
+          contextButton: {
+            theme: {
+              fill: 'var(--panel)',
+              stroke: 'var(--border)',
+              r: 8,
+              states: { hover: { fill: 'var(--control-hover)' }, select: { fill: 'var(--control-hover)' } }
+            },
+            symbolStroke: 'var(--text)'
+          }
+        }
       },
 
       mapNavigation: {
         enabled: true,
         buttonOptions: {
-          verticalAlign: 'bottom'
+          align: 'right',
+          verticalAlign: 'top',
+          y: 40,
+          theme: {
+            fill: 'var(--panel)',
+            stroke: 'var(--border)',
+            'stroke-width': 1,
+            r: 8,
+            style: { color: 'var(--text)' },
+            states: { hover: { fill: 'var(--control-hover)' } }
+          }
         }
       },
 
       tooltip: {
         useHTML: true,
-        style: {
-          width: '250px'
+        backgroundColor: 'var(--panel)',
+        borderColor: 'var(--border)',
+        borderRadius: 10,
+        shadow: false,
+        style: { color: 'var(--text)' },
+        headerFormat: '',
+        pointFormatter: function() {
+          var value = this.value == null ? '' : ': <b>' + Game.formatValue(this.value) + '</b>';
+          return '<img class="flag" src="https://flagcdn.com/24x18/' + this.flag + '.png" width="24" height="18" alt=""> '
+            + this.name + value;
         },
-        pointFormat: '<img class="flag" src="https://flagcdn.com/24x18/{point.flag}.png" width="24" height="18" alt="">'
-          + ' {point.name}: <b>{point.value}</b>',
-        positioner: function () {
-          return { x: 0, y: this.chart.chartHeight - 300 };
-        }
+        nullFormat: 'No data'
       },
 
       colorAxis: {
         min: options.min,
         max: options.max,
-        minColor: options.colorFunction(options.min),
-        maxColor: options.colorFunction(options.max),
+        stops: Game.colorStops(options.useMax),
+        // put the answer on the right end of the legend
         reversed: !options.useMax,
-        type: options.useLogarithmic ? 'logarithmic' : 'linear'
+        type: options.useLogarithmic ? 'logarithmic' : 'linear',
+        labels: {
+          style: { color: 'var(--muted)' },
+          formatter: function() {
+            return Game.formatValue(this.value);
+          }
+        }
+      },
+
+      // on phones the panel is below the map, so move the legend to the top
+      responsive: {
+        rules: [{
+          condition: { maxWidth: 700 },
+          chartOptions: {
+            chart: { spacing: [12, 12, 12, 12] },
+            legend: { verticalAlign: 'top', align: 'left', symbolWidth: 160 }
+          }
+        }]
       },
 
       series: [{
         data: options.data,
         joinBy: ['iso-a2', 'code'],
         mapData: Game.mapData,
-        name: options.indicator.sourceNote + ' ... Source: ' + options.indicator.sourceOrganization,
+        name: options.indicator.name,
+        borderColor: 'var(--border)',
+        nullColor: 'var(--null)',
+        nullInteraction: true,
+        cursor: 'pointer',
         states: {
           hover: {
-            //color: '#bada55'
+            borderColor: 'var(--bright)',
+            borderWidth: 1.5
           }
         },
-        cursor: 'pointer',
         point: {
           events: {
             click: function(e) {
+              if (map.gameOver || this.guessed || this.actualValue == null) return;
+              this.guessed = true;
+              guesses++;
+
               this.update({
                 value: this.actualValue,
                 color: null
               }, false);
               map.redraw();
 
-              if (this.actualValue == (options.useMax ? options.max : options.min)) {
+              if (this.actualValue == target) {
                 Game.progress({
-                  guess: this.name
+                  point: this
                 });
 
                 Game.reveal(map, options.correctPoints);
+                Game.log('You found it in ' + guesses + (guesses == 1 ? ' guess!' : ' guesses.'));
 
                 var giveUp = document.getElementById('give-up');
                 giveUp.disabled = true;
                 giveUp.onclick = null;
                 document.getElementById('next').disabled = false;
               } else {
-                //var diff = Math.abs((options.useMax ? options.max : options.min) - this.value);
-
                 var guessCountry = options.countries[this.code];
 
                 var diff = options.correctPoints.map(function(point) {
@@ -409,8 +484,8 @@ var Game = {
                 }, Number.MAX_VALUE);
 
                 Game.progress({
-                  guess: this.name,
-                  diff: Math.round(diff) + ' km'
+                  point: this,
+                  diff: diff
                 });
               }
             }
@@ -419,26 +494,49 @@ var Game = {
       }]
     };
 
-    var map = Highcharts.mapChart(options.container, mapOptions);
+    document.getElementById('goal').textContent = options.useMax ? 'highest' : 'lowest';
+    document.getElementById('indicator').textContent = options.indicator.name;
+    document.getElementById('note').textContent = options.indicator.sourceNote || 'No description.';
+    document.getElementById('note-source').textContent = options.indicator.sourceOrganization
+      ? 'Source: ' + options.indicator.sourceOrganization : '';
+    document.getElementById('answer').replaceChildren();
+    document.getElementById('about').open = false;
+
+    if (Game.map) Game.map.destroy();
+    var map = Game.map = Highcharts.mapChart(options.container, mapOptions);
 
     callback && callback(null, map);
   },
 
   reveal: function $this(map, correctPoints) {
-    var data = map.series[0].data;
-    data.forEach(function(point) {
+    map.gameOver = true;
+    var correct = {};
+    correctPoints.forEach(function(point) {
+      correct[point.code] = true;
+    });
+
+    map.series[0].data.forEach(function(point) {
       point.update({
         color: null,
-        value: point.actualValue
+        value: point.actualValue,
+        // outline the answers so small countries are easier to spot
+        borderColor: correct[point.code] ? 'var(--bright)' : undefined,
+        borderWidth: correct[point.code] ? 2 : undefined
       }, false);
     });
     map.redraw();
-    
-    var correctAnswers = correctPoints.map(function(point) {
-      return point.name;
-    }).sort();
 
-    document.getElementById('progress').insertAdjacentHTML('beforeend', '<li>All correct answers: ' + correctAnswers.join(', ') + '</li>');
+    var answers = correctPoints.slice().sort(function(a, b) {
+      return a.name.localeCompare(b.name);
+    });
+    var answer = document.getElementById('answer');
+    var heading = document.createElement('div');
+    heading.className = 'answer-heading';
+    heading.textContent = (answers.length == 1 ? 'Answer' : 'Answers') + ' (' + Game.formatValue(answers[0].actualValue) + ')';
+    answer.replaceChildren(heading);
+    answers.forEach(function(point) {
+      answer.append(Game.countryLabel(point));
+    });
   },
 
   distance: function $this(country1, country2) {

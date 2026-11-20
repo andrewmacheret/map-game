@@ -1,5 +1,5 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -7,6 +7,10 @@
 <meta property="og:image" content="https://andrewmacheret.com/projects/map-game/world.png" />
 <meta property="og:title" content="World Indicators Guessing Game" />
 <meta property="og:description" content="Guess the country that has the most (or the least) of a randomly chosen data indicator." />
+
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌍</text></svg>" />
+<meta name="theme-color" content="#0b1120" media="(prefers-color-scheme: dark)" />
+<meta name="theme-color" content="#e2e8f0" media="(prefers-color-scheme: light)" />
 
 <title>World Indicators Guessing Game</title>
 <script async src="https://andrewmacheret.com/analytics.js"></script>
@@ -25,17 +29,24 @@
 
 <body>
 
-<div id="body-wrapper">
+<div id="container"></div>
 
-  <div id="controls">
-    <div id="button-group">
-      <button type="button" id="give-up">Give Up</button>
-      <button type="button" id="next">New Game</button>
-    </div>
-    <div id="status">Loading...</div>
-    <div id="progress-wrapper"><ul id="progress"></ul></div>
+<div id="panel">
+  <h1>World Indicators Guessing Game</h1>
+  <p id="prompt">Find the country with the <b id="goal">...</b></p>
+  <details id="about">
+    <summary id="indicator">Loading a random indicator...</summary>
+    <p id="note"></p>
+    <p id="note-source"></p>
+  </details>
+  <div id="button-group">
+    <button type="button" id="give-up" disabled>Give Up</button>
+    <button type="button" id="next" class="primary" disabled>New Game</button>
   </div>
-  <div id="container"><h1>Loading...</h1></div>
+  <div id="status" aria-live="polite"></div>
+  <div id="answer"></div>
+  <ol id="progress" aria-live="polite"></ol>
+  <p id="source">Data from <a href="https://data.worldbank.org">World Bank</a>, map by <a href="https://www.highcharts.com">Highcharts</a></p>
 </div>
 
 </body>
