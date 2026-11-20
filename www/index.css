@@ -44,3 +44,22 @@ button {
 .distance {
     color: #ff0000;
 }
+
+/* phones: put the controls above the map */
+@media (max-width: 700px) {
+    #controls, #container {
+        width: auto;
+        float: none;
+        margin: 10px;
+    }
+    #controls {
+        height: auto;
+    }
+    #container {
+        height: 60vh;
+    }
+    #progress-wrapper {
+        max-height: 8em;
+        overflow-y: auto;
+    }
+}
