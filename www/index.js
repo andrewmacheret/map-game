@@ -40,10 +40,15 @@ var Game = {
     }
   },
 
-  // a flag and a country name, for the guess list
+  // a flag and a country name that zooms the map to the country when clicked
   countryLabel: function(point) {
-    var label = document.createElement('span');
+    var label = document.createElement('button');
+    label.type = 'button';
     label.className = 'country';
+    label.title = 'Zoom to ' + point.name;
+    label.onclick = function() {
+      Game.zoomTo(point.code);
+    };
     var flag = document.createElement('img');
     flag.className = 'flag';
     flag.src = 'https://flagcdn.com/24x18/' + point.flag + '.png';
@@ -54,6 +59,40 @@ var Game = {
     name.textContent = point.name;
     label.append(flag, name);
     return label;
+  },
+
+  zoomTo: function(code) {
+    var point = Game.map && Game.map.get(code);
+    if (!point) return;
+    var view = Game.map.mapView;
+    view.fitToBounds(point.bounds, undefined, false);
+    // back off a little to show neighbors, and don't zoom tiny countries all the way in
+    view.setView(view.center, Math.min(view.zoom - 0.7, view.minZoom + 3));
+    // wait for the zoom to finish so the tooltip lands on the country
+    window.setTimeout(function() {
+      Game.map.tooltip.refresh(point);
+    }, 600);
+  },
+
+  // the legend can be hidden because it covers countries in the corner
+  legendOpen: true,
+
+  // keep the legend's toggle button on the legend's top right corner
+  placeLegendToggle: function(chart) {
+    var toggle = document.getElementById('legend-toggle');
+    var legend = chart.legend;
+    var open = Game.legendOpen && legend.group;
+    toggle.hidden = false;
+    toggle.classList.toggle('collapsed', !open);
+    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    toggle.textContent = open ? '\u00d7' : 'Legend';
+    toggle.title = open ? 'Hide legend' : 'Show legend';
+    toggle.style.left = open ? (legend.group.translateX + legend.legendWidth) + 'px' : '';
+    toggle.style.top = open ? legend.group.translateY + 'px' : '';
+    toggle.onclick = function() {
+      Game.legendOpen = !Game.legendOpen;
+      chart.update({ legend: { enabled: Game.legendOpen } });
+    };
   },
 
   formatKm: function(km) {
@@ -196,6 +235,7 @@ var Game = {
         var feature = options.features[countryId];
         if (feature) {
           data.push({
+            id: countryId,
             code: countryId,
             name: feature.name,
             flag: countryId.replace('UK', 'GB').toLowerCase(),
@@ -334,14 +374,24 @@ var Game = {
 
       chart: {
         backgroundColor: 'transparent',
-        // leave room on the left for the panel so it doesn't hide countries
-        spacing: [12, 12, 12, 364],
+        events: {
+          render: function() {
+            Game.placeLegendToggle(this);
+          }
+        },
+        spacing: [12, 12, 12, 12],
         style: { fontFamily: 'inherit' }
       },
 
       title: { text: null },
 
+      // fit the map to the right of the panel so it doesn't hide countries
+      mapView: {
+        padding: [0, 0, 0, 364]
+      },
+
       legend: {
+        enabled: Game.legendOpen,
         title: {
           text: options.useMax ? 'Answer is the highest' : 'Answer is the lowest',
           style: { color: 'var(--muted)', fontWeight: 'normal', fontSize: '12px' }
@@ -427,7 +477,7 @@ var Game = {
         rules: [{
           condition: { maxWidth: 700 },
           chartOptions: {
-            chart: { spacing: [12, 12, 12, 12] },
+            mapView: { padding: 0 },
             legend: { verticalAlign: 'top', align: 'left', symbolWidth: 160 }
           }
         }]

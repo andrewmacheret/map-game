@@ -230,6 +230,74 @@ body.busy #status::before {
   font-weight: 600;
 }
 
+button.country {
+  flex: none;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: inherit;
+  font-weight: inherit;
+  text-align: left;
+}
+
+button.country:hover:not(:disabled) {
+  background: none;
+}
+
+button.country:hover span {
+  color: var(--link-hover);
+  text-decoration: underline;
+}
+
+#legend-toggle {
+  position: absolute;
+  z-index: 5;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  margin: 6px 0 0 -30px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1;
+}
+
+#legend-toggle:hover {
+  color: var(--bright);
+  background: var(--control-hover);
+}
+
+/* when the legend is hidden, show a small pill where it was */
+#legend-toggle.collapsed {
+  right: 12px;
+  bottom: 12px;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 6px 12px 6px 34px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: var(--text);
+  font-size: 12px;
+}
+
+#legend-toggle.collapsed::before {
+  content: '';
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  width: 14px;
+  height: 8px;
+  margin-top: -4px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #312e81, #c026d3, #fbbf24);
+}
+
 #progress {
   margin: 10px 0 0;
   padding: 10px 0 0;
@@ -322,6 +390,13 @@ a:hover {
 @media (max-width: 700px) {
   #container {
     bottom: 45dvh;
+  }
+
+  #legend-toggle.collapsed {
+    right: auto;
+    bottom: auto;
+    top: 12px;
+    left: 12px;
   }
 
   #panel {
