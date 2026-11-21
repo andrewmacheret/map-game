@@ -256,7 +256,7 @@ var Game = {
   },
 
   // colors from far off to the answer, the same in light and dark mode
-  palette: ['#312e81', '#6d28d9', '#c026d3', '#f472b6', '#fbbf24'],
+  palette: ['#123d2a', '#1a7f37', '#3fb950', '#9be564', '#f5e663'],
 
   // the answer end of the scale is always the last palette color
   colorStops: function(useMax) {
@@ -402,7 +402,7 @@ var Game = {
         verticalAlign: 'bottom',
         floating: true,
         backgroundColor: 'var(--panel)',
-        borderColor: 'var(--border)',
+        borderColor: 'var(--glass-border)',
         borderWidth: 1,
         borderRadius: 12,
         padding: 12,
@@ -417,7 +417,7 @@ var Game = {
           contextButton: {
             theme: {
               fill: 'var(--panel)',
-              stroke: 'var(--border)',
+              stroke: 'var(--glass-border)',
               r: 8,
               states: { hover: { fill: 'var(--control-hover)' }, select: { fill: 'var(--control-hover)' } }
             },
@@ -434,7 +434,7 @@ var Game = {
           y: 40,
           theme: {
             fill: 'var(--panel)',
-            stroke: 'var(--border)',
+            stroke: 'var(--glass-border)',
             'stroke-width': 1,
             r: 8,
             style: { color: 'var(--text)' },
@@ -446,7 +446,7 @@ var Game = {
       tooltip: {
         useHTML: true,
         backgroundColor: 'var(--panel)',
-        borderColor: 'var(--border)',
+        borderColor: 'var(--glass-border)',
         borderRadius: 10,
         shadow: false,
         style: { color: 'var(--text)' },
@@ -490,7 +490,7 @@ var Game = {
         joinBy: ['iso-a2', 'code'],
         mapData: Game.mapData,
         name: options.indicator.name,
-        borderColor: 'var(--border)',
+        borderColor: 'var(--glass-border)',
         // no-data countries get /// stripes and no hover, so they don't look clickable
         nullColor: {
           pattern: {

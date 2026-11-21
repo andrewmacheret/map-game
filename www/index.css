@@ -2,9 +2,9 @@
 
 :root {
   /* countries with no data, and countries hidden by the legend */
-  --null: light-dark(#e2e8f0, #1e293b);
-  --null-line: light-dark(#cbd5e1, #334155);
-  --hidden: light-dark(#94a3b8, #475569);
+  --null: color-mix(in srgb, var(--text) 8%, var(--surface));
+  --null-line: color-mix(in srgb, var(--text) 18%, var(--surface));
+  --hidden: color-mix(in srgb, var(--text) 35%, var(--surface));
 }
 
 html,
@@ -191,7 +191,7 @@ button.country:hover span {
   height: 8px;
   margin-top: -4px;
   border-radius: 2px;
-  background: linear-gradient(90deg, #312e81, #c026d3, #fbbf24);
+  background: linear-gradient(90deg, #123d2a, #3fb950, #f5e663);
 }
 
 #guesses {
