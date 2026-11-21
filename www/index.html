@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light dark" />
 
 <meta property="og:image" content="https://andrewmacheret.com/projects/map-game/world.png" />
 <meta property="og:title" content="World Indicators Guessing Game" />
@@ -21,6 +22,7 @@
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/highcharts@13.1.1/modules/pattern-fill.js"></script>
 
 <!-- Flag images provided by https://flagcdn.com -->
+<link rel="stylesheet" href="https://andrewmacheret.com/projects.css" />
 <link rel="stylesheet" type="text/css" href="index.css" />
 
 <script type="text/javascript" src="index.js"></script>
@@ -32,7 +34,7 @@
 <div id="container"></div>
 <button type="button" id="legend-toggle" hidden></button>
 
-<div id="panel">
+<div id="panel" class="overlay">
   <h1>World Indicators Guessing Game</h1>
   <p id="prompt">Find the country with the <b id="goal">...</b></p>
   <details id="about">
@@ -42,8 +44,8 @@
     <p><a id="indicator-link" href="https://data.worldbank.org/indicator">See this data on World Bank</a></p>
   </details>
   <div id="button-group">
-    <button type="button" id="give-up" disabled>Give Up</button>
-    <button type="button" id="next" class="primary" disabled>New Game</button>
+    <button type="button" id="give-up" class="control small" disabled>Give Up</button>
+    <button type="button" id="next" class="control small primary" disabled>New Game</button>
   </div>
   <div id="status" aria-live="polite"></div>
   <div id="answer"></div>
@@ -51,9 +53,14 @@
     <summary>Guesses <span id="guess-count" class="count">0</span></summary>
     <ol id="progress" aria-live="polite"></ol>
   </details>
-  <p id="source">Data from <a id="source-link" href="https://data.worldbank.org">World Bank</a>, map by <a href="https://www.highcharts.com">Highcharts</a></p>
+  <footer class="footer">
+    <a href="https://andrewmacheret.com/">More projects</a>
+    <span aria-hidden="true">&middot;</span>
+    <span>Data from <a id="source-link" href="https://data.worldbank.org">World Bank</a>, map by <a href="https://www.highcharts.com">Highcharts</a></span>
+    <span aria-hidden="true">&middot;</span>
+    <a href="https://github.com/andrewmacheret/map-game">Source</a>
+  </footer>
 </div>
 
 </body>
 </html>
-
