@@ -38,6 +38,8 @@ var Game = {
       list.prepend(item);
       Game.log(options.point.name + ': ' + result.textContent, {quiet: true});
     }
+    document.getElementById('guess-count').textContent = list.children.length;
+    document.getElementById('guesses').hidden = list.children.length == 0;
   },
 
   // a flag and a country name that zooms the map to the country when clicked

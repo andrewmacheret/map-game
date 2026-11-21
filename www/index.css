@@ -298,15 +298,28 @@ button.country:hover span {
   background: linear-gradient(90deg, #312e81, #c026d3, #fbbf24);
 }
 
-#progress {
-  margin: 10px 0 0;
-  padding: 10px 0 0;
+#guesses {
+  margin-top: 10px;
+  padding-top: 10px;
   border-top: 1px solid var(--border);
-  list-style: none;
 }
 
-#progress:empty {
-  display: none;
+.count {
+  display: inline-block;
+  min-width: 1.4em;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--control);
+  border: 1px solid var(--control-border);
+  text-align: center;
+  font-size: 12px;
+  font-weight: normal;
+}
+
+#progress {
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
 }
 
 #progress li {

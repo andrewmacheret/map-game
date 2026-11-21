@@ -47,7 +47,10 @@
   </div>
   <div id="status" aria-live="polite"></div>
   <div id="answer"></div>
-  <ol id="progress" aria-live="polite"></ol>
+  <details id="guesses" open hidden>
+    <summary>Guesses <span id="guess-count" class="count">0</span></summary>
+    <ol id="progress" aria-live="polite"></ol>
+  </details>
   <p id="source">Data from <a id="source-link" href="https://data.worldbank.org">World Bank</a>, map by <a href="https://www.highcharts.com">Highcharts</a></p>
 </div>
 
