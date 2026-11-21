@@ -10,6 +10,7 @@
   --muted: #94a3b8;
   --border: rgb(255 255 255 / 0.1);
   --null: #1e293b;
+  --null-line: #334155;
   --hidden: #475569;
   --control: rgb(255 255 255 / 0.08);
   --control-border: rgb(255 255 255 / 0.14);
@@ -33,6 +34,7 @@
     --muted: #64748b;
     --border: rgb(15 23 42 / 0.12);
     --null: #e2e8f0;
+    --null-line: #cbd5e1;
     --hidden: #94a3b8;
     --control: rgb(255 255 255 / 0.8);
     --control-border: rgb(15 23 42 / 0.15);
@@ -117,6 +119,11 @@ summary::marker {
   color: var(--muted);
   font-size: 12px;
   line-height: 1.5;
+}
+
+#about p:last-child {
+  margin: 6px 0 0;
+  font-size: 12px;
 }
 
 #note-source:empty {
@@ -284,8 +291,23 @@ body.busy #status::before {
 
 #source {
   margin: 10px 0 0;
-  font-size: 12px;
+  font-size: 11px;
   color: var(--muted);
+  opacity: 0.35;
+  transition: opacity 200ms;
+}
+
+#source:hover,
+#source:focus-within {
+  opacity: 0.8;
+}
+
+#source a {
+  color: inherit;
+}
+
+.highcharts-null-point {
+  cursor: default;
 }
 
 a {

@@ -439,8 +439,16 @@ var Game = {
         mapData: Game.mapData,
         name: options.indicator.name,
         borderColor: 'var(--border)',
-        nullColor: 'var(--null)',
-        nullInteraction: true,
+        // no-data countries get /// stripes and no hover, so they don't look clickable
+        nullColor: {
+          pattern: {
+            path: { d: 'M 0 8 L 8 0 M -2 2 L 2 -2 M 6 10 L 10 6', stroke: 'var(--null-line)', strokeWidth: 1.5 },
+            width: 8,
+            height: 8,
+            backgroundColor: 'var(--null)'
+          }
+        },
+        nullInteraction: false,
         cursor: 'pointer',
         states: {
           hover: {
@@ -499,6 +507,9 @@ var Game = {
     document.getElementById('note').textContent = options.indicator.sourceNote || 'No description.';
     document.getElementById('note-source').textContent = options.indicator.sourceOrganization
       ? 'Source: ' + options.indicator.sourceOrganization : '';
+    var indicatorUrl = 'https://data.worldbank.org/indicator/' + encodeURIComponent(options.indicator.id);
+    document.getElementById('indicator-link').href = indicatorUrl;
+    document.getElementById('source-link').href = indicatorUrl;
     document.getElementById('answer').replaceChildren();
     document.getElementById('about').open = false;
 

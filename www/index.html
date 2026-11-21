@@ -18,6 +18,7 @@
 
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/highcharts@13.1.1/highmaps.js"></script>
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/highcharts@13.1.1/modules/exporting.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/highcharts@13.1.1/modules/pattern-fill.js"></script>
 
 <!-- Flag images provided by https://flagcdn.com -->
 <link rel="stylesheet" type="text/css" href="index.css" />
@@ -37,6 +38,7 @@
     <summary id="indicator">Loading a random indicator...</summary>
     <p id="note"></p>
     <p id="note-source"></p>
+    <p><a id="indicator-link" href="https://data.worldbank.org/indicator">See this data on World Bank</a></p>
   </details>
   <div id="button-group">
     <button type="button" id="give-up" disabled>Give Up</button>
@@ -45,7 +47,7 @@
   <div id="status" aria-live="polite"></div>
   <div id="answer"></div>
   <ol id="progress" aria-live="polite"></ol>
-  <p id="source">Data from <a href="https://data.worldbank.org">World Bank</a>, map by <a href="https://www.highcharts.com">Highcharts</a></p>
+  <p id="source">Data from <a id="source-link" href="https://data.worldbank.org">World Bank</a>, map by <a href="https://www.highcharts.com">Highcharts</a></p>
 </div>
 
 </body>
