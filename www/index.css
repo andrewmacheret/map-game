@@ -22,7 +22,7 @@ body {
   z-index: 10;
   top: 12px;
   left: 12px;
-  width: min(340px, calc(100vw - 24px));
+  width: min(380px, calc(100vw - 24px));
   max-height: calc(100dvh - 24px);
   overflow: auto;
 }
