@@ -19,4 +19,4 @@ Deploy:
 
 ## Health check
 
-[`/projects/map-game/healthcheck/`](https://andrewmacheret.com/projects/map-game/healthcheck/) checks the page and its scripts and styles (including Highmaps), the World Bank API, the world map on jsDelivr and the flags on flagcdn. The Canary workflow (`.github/workflows/canary.yml`) opens it once a day, started by [andrewmacheret/canary](https://github.com/andrewmacheret/canary).
+Once a day, the Canary workflow (`.github/workflows/canary.yml`) checks the page and its scripts and styles (including Highmaps), the World Bank API, the world map on jsDelivr and the flags on flagcdn. It's started by [andrewmacheret/canary](https://github.com/andrewmacheret/canary).
