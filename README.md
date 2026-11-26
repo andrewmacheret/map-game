@@ -4,7 +4,7 @@
 
 A web-based map game using [Highmaps](https://www.highcharts.com/products/highmaps), with data from the [World Bank API](https://datahelpdesk.worldbank.org/knowledgebase/articles/889392).
 
-See it running at [https://andrewmacheret.com/projects/map-game](https://andrewmacheret.com/projects/map-game).
+See it running at [https://andrewmacheret.com/projects/map-game/](https://andrewmacheret.com/projects/map-game/).
 
 ![Map game image](www/world.png?raw=true "Map game image")
 
